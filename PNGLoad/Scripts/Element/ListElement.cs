@@ -11,12 +11,12 @@ public class ListElement : MonoBehaviour
     [SerializeField] private TMPro.TextMeshProUGUI fileBirthTime;
 
     private int requestID;
-    private ImageLoader imageLoader;
 
+    public ElementInfo ElementInfo { get; private set; }    
     private bool HasAllRefs => image != null && fileName != null && fileBirthTime != null;
 
 
-    public void Initialize(ElementInfo info, int requestID, ImageLoader imageLoader)
+    public void Initialize(ElementInfo info)
     {
         if(!HasAllRefs)
         {
@@ -24,8 +24,7 @@ public class ListElement : MonoBehaviour
             return;
         }
 
-        this.requestID = requestID;
-        this.imageLoader = imageLoader;
+        ElementInfo = info;
 
         UpdateName(info.name);
         UpdateSpan(info.timeSinceBirth);
@@ -36,15 +35,14 @@ public class ListElement : MonoBehaviour
     private void UpdateSpan(string name) => fileBirthTime.text = name;
     private void UpdateImage(string path)
     {
-        imageLoader.RequestImage(path, requestID);
-        imageLoader.OnLoadedImage += LoadImage;
+        ImageLoader.RequestImage(path, out requestID);
+        ImageLoader.OnLoadedImage += LoadImage;
     }
     private void OnDestroy()
     {
         //destroy loaded texture to prevent memory leak
         Destroy(image.texture);
-        if(imageLoader != null)
-            imageLoader.OnLoadedImage -= LoadImage;
+        ImageLoader.OnLoadedImage -= LoadImage;
     }
     public void LoadImage(Texture2D texture, int requestID)
     {

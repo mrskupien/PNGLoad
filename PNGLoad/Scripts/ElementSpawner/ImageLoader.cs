@@ -3,25 +3,33 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
-public class ImageLoader
+public static class ImageLoader
 {
     /// <summary>
     /// Texture with request ID
     /// </summary>
-    public Action<Texture2D, int> OnLoadedImage;
+    public static Action<Texture2D, int> OnLoadedImage;
 
-    private Queue<(string path, int id)> imageRequests = new Queue<(string, int)>();
-    private CancellationTokenSource cancellation;
+    private static Queue<(string path, int id)> imageRequests = new Queue<(string, int)>();
+    private static CancellationTokenSource cancellation;
+    private static int requestID;
 
-    public bool IsRequestingActive { get; private set; }
-    private bool ShouldCancel { get; set; }
+    public static bool IsRequestingActive { get; private set; }
+    private static bool ShouldCancel { get; set; }
 
-    public void RequestImage(string path, int id)
+    /// <summary>
+    /// Request image with an ID to receive proper image
+    /// </summary>
+    /// <param name="path">Path to requested image</param>
+    /// <param name="id">ID of the request. Save and check on image loaded action</param>
+    public static void RequestImage(string path, out int id)
     {
         if(ShouldCancel && IsRequestingActive)
             StopActiveRequesting();
 
-        imageRequests.Enqueue((path, id));
+        id = requestID;
+
+        imageRequests.Enqueue((path, requestID++));
 
         if(IsRequestingActive)
             return;
@@ -29,9 +37,9 @@ public class ImageLoader
         StartAsyncRequest();
     }
 
-    public void Reset() => ShouldCancel = true;
+    public static void Reset() => ShouldCancel = true;
 
-    private void StopActiveRequesting()
+    private static void StopActiveRequesting()
     {
         cancellation.Dispose();
         imageRequests.Clear();
@@ -39,7 +47,7 @@ public class ImageLoader
         ShouldCancel = false;
     }
 
-    private async void StartAsyncRequest()
+    private static async void StartAsyncRequest()
     {
         IsRequestingActive = true;
         cancellation = new CancellationTokenSource();

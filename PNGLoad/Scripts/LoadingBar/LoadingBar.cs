@@ -8,7 +8,7 @@ public class LoadingBar : MonoBehaviour
     private int elementsToLoad;
     private int elementsLoaded;
 
-    private float Percentage => elementsToLoad == 0 ? 0 : elementsLoaded / (float)elementsToLoad;
+    private float Percentage => elementsToLoad == 0 ? 1 : elementsLoaded / (float)elementsToLoad;
 
     void Awake()
     {

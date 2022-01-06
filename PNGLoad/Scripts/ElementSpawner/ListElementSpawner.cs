@@ -8,7 +8,8 @@ public class ListElementSpawner : MonoBehaviour
 
     [SerializeField] private RectTransform scrollContent;
     [SerializeField] private GameObject listElementPrefab;
-    private ImageLoader imageLoader;
+
+    private List<ListElement> spawnedListElements = new List<ListElement>();
 
     private bool HasAllRefs => scrollContent != null && listElementPrefab != null;
 
@@ -20,7 +21,6 @@ public class ListElementSpawner : MonoBehaviour
             return;
         }
 
-        imageLoader = new ImageLoader();
         DirectoryFinder.OnFilesFound += SpawnListElements;
     }
     private void OnDestroy()
@@ -31,23 +31,52 @@ public class ListElementSpawner : MonoBehaviour
 
     private void SpawnListElements(List<ElementInfo> elementsToSpawn)
     {
-        ClearList();
-        if(imageLoader.IsRequestingActive)
-            imageLoader.Reset();
-        int id = 0;
+        UpdateElementsToSpawn(ref elementsToSpawn);
+
+        if(ImageLoader.IsRequestingActive)
+            ImageLoader.Reset();
+
+        int elementsNumber = 0;
         foreach(ElementInfo elementInfo in elementsToSpawn)
         {
             ListElement element = Instantiate(listElementPrefab, scrollContent).GetComponent<ListElement>();
-            element.Initialize(elementInfo, id, imageLoader);
-            id++;
+            spawnedListElements.Add(element);
+            element.Initialize(elementInfo);
+            elementsNumber++;
         }
-        OnElementsInitialized?.Invoke(id);
+        OnElementsInitialized?.Invoke(elementsNumber);
     }
 
-    private void ClearList()
+    private void UpdateElementsToSpawn(ref List<ElementInfo> elementsToSpawn)
     {
-        foreach(Transform element in scrollContent)
+        List<ElementInfo> properElementsToSpawn = new List<ElementInfo>();
+        List<ListElement> elementsToDestroy = new List<ListElement>(spawnedListElements);
+
+        foreach(var newElementInfo in elementsToSpawn)
         {
+            bool isNewElementExisting = false;
+
+            foreach(var spawnedElement in spawnedListElements)
+            {
+                if(spawnedElement.ElementInfo == newElementInfo)
+                {
+                    //new element is existing, skip spawning/destroying old one
+                    isNewElementExisting = true;
+                    elementsToDestroy.Remove(spawnedElement);
+                    break;
+                }
+            }
+
+            if(!isNewElementExisting)
+                properElementsToSpawn.Add(newElementInfo);
+        }
+
+        elementsToSpawn = properElementsToSpawn;
+
+        //destroy elements that are no longer existing
+        foreach(var element in elementsToDestroy)
+        {
+            spawnedListElements.Remove(element);
             Destroy(element.gameObject);
         }
     }

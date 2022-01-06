@@ -13,4 +13,13 @@ public struct ElementInfo
         this.name = name;
         this.imagePath = imagePath;
     }
+
+    public static bool operator== (ElementInfo first, ElementInfo second)
+    {
+        return first.imagePath.Equals(second.imagePath) && first.timeSinceBirth.Equals(second.timeSinceBirth);
+    }
+    public static bool operator!= (ElementInfo first, ElementInfo second)
+    {
+        return !(first == second);
+    }
 }
